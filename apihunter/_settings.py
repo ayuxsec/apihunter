@@ -1,0 +1,1 @@
+DDG_MAX_RESULT = 20
