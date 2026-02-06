@@ -96,7 +96,7 @@ class ApiHunterCli:
         parser.add_argument(
             "--mode",
             choices=["first", "third", "both"],
-            default="first",
+            default="both",
             help="API mode selection",
         )
 
