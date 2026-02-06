@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 from dataclasses import dataclass
+from enum import IntFlag, auto
 from typing import Iterable, List, Optional
 
 from ddgs import DDGS
@@ -13,11 +14,17 @@ from ._settings import DDG_MAX_RESULT
 logger = logging.getLogger(__name__)
 
 
+class Mode(IntFlag):
+    FIRST_PARTY = auto()
+    THIRD_PARTY = auto()
+
+
 @dataclass
 class Args:
     target_domain: Optional[str]
     target_organization: Optional[str]
     max_results: int
+    mode: Mode
 
 
 class ApiHunterCli:
@@ -34,19 +41,21 @@ class ApiHunterCli:
             logger.error("Either target domain or target organization must be provided")
             sys.exit(1)
 
-        self._run_dorks(
-            label="[+] running first party dorks",
-            dorks=self._dorks.first_party,
-            formatter=lambda d: d.format(target_domain=args.target_domain),
-            max_results=args.max_results,
-        )
+        if args.mode & Mode.FIRST_PARTY:
+            self._run_dorks(
+                label="[+] running first party dorks",
+                dorks=self._dorks.first_party,
+                formatter=lambda d: d.format(target_domain=args.target_domain),
+                max_results=args.max_results,
+            )
 
-        self._run_dorks(
-            label="[+] running 3rd party dorks",
-            dorks=self._dorks.third_party,
-            formatter=lambda d: d.format(org=args.target_organization),
-            max_results=args.max_results,
-        )
+        if args.mode & Mode.THIRD_PARTY:
+            self._run_dorks(
+                label="[+] running 3rd party dorks",
+                dorks=self._dorks.third_party,
+                formatter=lambda d: d.format(org=args.target_organization),
+                max_results=args.max_results,
+            )
 
     @staticmethod
     def _normalize_args(args: Args) -> None:
@@ -70,7 +79,7 @@ class ApiHunterCli:
 
         for dork in dorks:
             query = formatter(dork)
-            pprint(f"dork: {query}")
+            pprint(f"dork={query}")
 
             try:
                 results = self._ddgs.text(query, max_results=max_results)
@@ -84,11 +93,25 @@ class ApiHunterCli:
         parser.add_argument("-d", "--target-domain", type=str)
         parser.add_argument("-org", "--target-organization", type=str)
         parser.add_argument("-r", "--max-results", type=int)
+        parser.add_argument(
+            "--mode",
+            choices=["first", "third", "both"],
+            default="first",
+            help="API mode selection",
+        )
 
-        namespace = parser.parse_args(self._argv)
+        ns = parser.parse_args(self._argv)
+
+        if ns.mode == "first":
+            mode = Mode.FIRST_PARTY
+        elif ns.mode == "third":
+            mode = Mode.THIRD_PARTY
+        else:
+            mode = Mode.FIRST_PARTY | Mode.THIRD_PARTY
 
         return Args(
-            target_domain=namespace.target_domain,
-            target_organization=namespace.target_organization,
-            max_results=namespace.max_results,
+            target_domain=ns.target_domain,
+            target_organization=ns.target_organization,
+            max_results=ns.max_results,
+            mode=mode,
         )

@@ -18,7 +18,12 @@ class ApiHunterDorks:
         ]
 
         self.third_party = [
-            "site:postman.com {org}",
+            "site:postman.com intext:{org}",
+            "site:swaggerhub.com/apis {org}",
+            "site:apis.guru {org}",
+            "site:rapidapi.com {org}",
+            "site:stoplight.io {org}",
+            "site:gitbook.io {org}",
         ]
 
     @staticmethod

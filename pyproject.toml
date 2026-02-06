@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "apihunter"
-version = "0.1.0"
+version = "0.1.1"
 description = "Hunt for exposed API documentation using search dorks"
 requires-python = ">=3.10"
 dependencies = [
